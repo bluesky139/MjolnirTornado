@@ -37,6 +37,9 @@
     <Compile Include="handlers\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="mgrs\hello_mgr.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="mgrs\__init__.py">
       <SubType>Code</SubType>
     </Compile>

@@ -101,10 +101,12 @@ class Application(tornado.web.Application):
 		modules = self.get_modules('mgr')
 		mgrs = []
 		for name,path in modules.iteritems():
-			mgr = __import__(path, fromlist=['mgrs'])
-			mgrs.extend(mgr.mgrs)
+			module = __import__(path, fromlist=['mgrs'])
+			for mgr in module.mgrs:
+				mgrs = filter(lambda m: m[0].__name__ != mgr[0].__name__, mgrs)
+				mgrs.append(mgr)
 
-		mgrs = sorted(mgrs, cmp = lambda x,y:cmp(x[1],y[1]))
+		mgrs = sorted(mgrs, cmp=lambda x,y:cmp(x[1],y[1]))
 		for mgr in mgrs:
 			mgr  = mgr[0]
 			name = mgr.__name__

@@ -13,6 +13,12 @@ class TestMgr(BaseMgr):
 		yield tornado.gen.sleep(0.1)
 		raise tornado.gen.Return('async return, %s, %s' % (test_enum.name, s))
 
+class HelloMgr(BaseMgr):
+	pass
+
 mgrs = [
 	(TestMgr, 1000),
+	
+	# Override base mgr by service mgr with same class name.
+	#(HelloMgr, 100)
 ]
