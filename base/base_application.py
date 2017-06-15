@@ -25,10 +25,12 @@ class Application(tornado.web.Application):
 		#sys.path.append(self.root_dir + '/' + service)
 		self.init_mgrs()
 		
+		self.ui_modules_ = self.init_ui_modules()
 		self.handlers_ = self.init_handlers()
 		settings = dict(
 			template_path = self.root_dir,
 			static_path   = self.root_dir + '/' + service + '/static',
+			ui_modules    = self.ui_modules_,
 			cookie_secret = options.cookie_secret,
 			autoescape    = None
 		)
@@ -63,23 +65,23 @@ class Application(tornado.web.Application):
 
 		IOLoop.current().add_callback(_wait)
 
+	def init_ui_modules(self):
+		ui_modules = {}
+		modules = self.get_modules('ui_module')
+		for name,path in modules.iteritems():
+			module = __import__(path, fromlist=['ui_modules'])
+			ui_modules.update(module.ui_modules)
+		return ui_modules
+
 	def init_handlers(self):
 		'''All handlers under [service name]/handlers will be loaded at init.
 		Only file which ends with 'handler.py' will be loaded.
 		'''
 		handlers = []
-		modules  = []
+		modules  = self.get_modules('handler')
 
-		dirs = os.listdir(self.root_dir + '/' + self.service + '/handlers')
-		for dir in dirs:
-			if dir.endswith('handler.py') or dir.endswith('handler.pyc') or dir.endswith('handler.pyo'):
-				name = dir[:dir.rfind('.')]
-				if name in modules:
-					continue
-				modules.append(name)
-
-		for module in modules:
-			module = __import__(self.service + '.handlers.' + module, fromlist = ['handlers'])
+		for name,path in modules.iteritems():
+			module = __import__(path, fromlist=['handlers'])
 			handlers.extend(module.handlers)
 		#handlers.append((r'/', WelcomeHandler))
 		handlers.append((r'/static_base/(.+)', tornado.web.StaticFileHandler, dict(path=self.root_dir + '/base/static')))
@@ -94,7 +96,7 @@ class Application(tornado.web.Application):
 		eg. `ConnectionMgr` class in ``connection_mgr.py``, then you can access it by ``self.application.connection_mgr``.
 		In your handler, you can access it by ``self.connection_mgr``, see comments in `BaseHandler.initialize()` for more details.
 		'''
-		modules = self.get_mgr_modules()
+		modules = self.get_modules('mgr')
 		mgrs = []
 		for name,path in modules.iteritems():
 			mgr = __import__(path, fromlist=['mgrs'])
@@ -107,27 +109,31 @@ class Application(tornado.web.Application):
 			obj  = mgr(self)
 			setattr(self, utils.type.String.lower_upper_with_underscore(name), obj)
 
-	def get_mgr_modules(self):
+	def get_modules(self, module_name):
 		modules = collections.OrderedDict()
-		dirs = os.listdir(self.root_dir + '/base/mgrs')
-		for dir in dirs:
-			if dir.endswith('mgr.py') or dir.endswith('mgr.pyc') or dir.endswith('mgr.pyo'):
-				name = dir[:dir.rfind('.')]
-				if name in modules:
-					continue
-				Assert(not modules.has_key(name), 'Duplicated mgr ' + name)
-				modules[name] = 'base.mgrs.' + name
+		path = self.root_dir + '/base/' + module_name + 's'
+		if os.path.exists(path):
+			dirs = os.listdir(path)
+			for dir in dirs:
+				if dir.endswith(module_name + '.py') or dir.endswith(module_name + '.pyc') or dir.endswith(module_name + '.pyo'):
+					name = dir[:dir.rfind('.')]
+					if name in modules:
+						continue
+					Assert(not modules.has_key(name), 'Duplicated ' + module_name + ' ' + name)
+					modules[name] = 'base.' + module_name + 's.' + name
 
-		dirs = os.listdir(self.root_dir + '/' + self.service + '/mgrs')
-		sub_modules = {}
-		for dir in dirs:
-			if dir.endswith('mgr.py') or dir.endswith('mgr.pyc') or dir.endswith('mgr.pyo'):
-				name = dir[:dir.rfind('.')]
-				if name in sub_modules:
-					continue
-				Assert(not sub_modules.has_key(name), 'Duplicated mgr ' + name)
-				sub_modules[name] = self.service + '.mgrs.' + name
-		modules.update(sub_modules)
+		path = self.root_dir + '/' + self.service + '/' + module_name + 's'
+		if os.path.exists(path):
+			dirs = os.listdir(path)
+			sub_modules = {}
+			for dir in dirs:
+				if dir.endswith(module_name + '.py') or dir.endswith(module_name + '.pyc') or dir.endswith(module_name + '.pyo'):
+					name = dir[:dir.rfind('.')]
+					if name in sub_modules:
+						continue
+					Assert(not sub_modules.has_key(name), 'Duplicated ' + module_name + ' ' + name)
+					sub_modules[name] = self.service + '.' + module_name + 's.' + name
+			modules.update(sub_modules)
 		return modules
 
 	def switch_to_alive(self):

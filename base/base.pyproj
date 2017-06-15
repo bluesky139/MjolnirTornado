@@ -34,6 +34,12 @@
     <Compile Include="mgrs\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ui_modules\template_ui_module.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ui_modules\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="utils\file_utils.py">
       <SubType>Code</SubType>
     </Compile>
@@ -56,11 +62,16 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="mgrs\" />
+    <Folder Include="templates\" />
+    <Folder Include="ui_modules\" />
     <Folder Include="static\" />
     <Folder Include="utils\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="static\jquery-3.2.1.min.js" />
+    <Content Include="templates\hello.html">
+      <SubType>Code</SubType>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

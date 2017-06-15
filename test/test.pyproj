@@ -34,11 +34,18 @@
     <Compile Include="mgrs\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ui_modules\test_ui_module.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ui_modules\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="handlers\" />
     <Folder Include="mgrs\" />
+    <Folder Include="ui_modules\" />
     <Folder Include="static\" />
     <Folder Include="templates\" />
   </ItemGroup>
@@ -47,6 +54,9 @@
       <SubType>Code</SubType>
     </Content>
     <Content Include="templates\test.html">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="templates\test2.html">
       <SubType>Code</SubType>
     </Content>
   </ItemGroup>

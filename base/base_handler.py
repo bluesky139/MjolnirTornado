@@ -35,7 +35,7 @@ class BaseHandler(tornado.web.RequestHandler):
 		eg. `ConnectionMgr` class in ``connection_mgr.py``, then you can access it by ``self.connection_mgr``.
 		see comments in `Application.init_mgrs()` for more details.
 		'''
-		modules = self.application.get_mgr_modules()
+		modules = self.application.get_modules('mgr')
 		mgrs = []
 		for name,path in modules.iteritems():
 			mgr = __import__(path, fromlist = ['mgrs'])
