@@ -37,9 +37,11 @@ class BaseHandler(tornado.web.RequestHandler):
 		'''
 		modules = self.application.get_modules('mgr')
 		mgrs = []
-		for name,path in modules.iteritems():
-			mgr = __import__(path, fromlist = ['mgrs'])
-			mgrs.extend(mgr.mgrs)
+		for path in modules:
+			module = __import__(path, fromlist=['mgrs'])
+			for mgr in module.mgrs:
+				mgrs = filter(lambda m: m[0].__name__ != mgr[0].__name__, mgrs)
+				mgrs.append(mgr)
 
 		for mgr in mgrs:
 			mgr  = mgr[0]

@@ -71,7 +71,7 @@ class Application(tornado.web.Application):
 		'''
 		ui_modules = {}
 		modules = self.get_modules('ui_module')
-		for name,path in modules.iteritems():
+		for path in modules:
 			module = __import__(path, fromlist=['ui_modules'])
 			ui_modules.update(module.ui_modules)
 		return ui_modules
@@ -83,7 +83,7 @@ class Application(tornado.web.Application):
 		handlers = []
 		modules  = self.get_modules('handler')
 
-		for name,path in modules.iteritems():
+		for path in modules:
 			module = __import__(path, fromlist=['handlers'])
 			for handler in module.handlers:
 				handlers = filter(lambda h: h[0] != handler[0], handlers)
@@ -103,7 +103,7 @@ class Application(tornado.web.Application):
 		'''
 		modules = self.get_modules('mgr')
 		mgrs = []
-		for name,path in modules.iteritems():
+		for path in modules:
 			module = __import__(path, fromlist=['mgrs'])
 			for mgr in module.mgrs:
 				mgrs = filter(lambda m: m[0].__name__ != mgr[0].__name__, mgrs)
@@ -117,30 +117,22 @@ class Application(tornado.web.Application):
 			setattr(self, utils.type.String.lower_upper_with_underscore(name), obj)
 
 	def get_modules(self, module_name):
-		modules = collections.OrderedDict()
+		modules = []
 		path = self.root_dir + '/base/' + module_name + 's'
 		if os.path.exists(path):
 			dirs = os.listdir(path)
 			for dir in dirs:
 				if dir.endswith(module_name + '.py') or dir.endswith(module_name + '.pyc') or dir.endswith(module_name + '.pyo'):
 					name = dir[:dir.rfind('.')]
-					if name in modules:
-						continue
-					Assert(not modules.has_key(name), 'Duplicated ' + module_name + ' ' + name)
-					modules[name] = 'base.' + module_name + 's.' + name
+					modules.append('base.' + module_name + 's.' + name)
 
 		path = self.root_dir + '/' + self.service + '/' + module_name + 's'
 		if os.path.exists(path):
 			dirs = os.listdir(path)
-			sub_modules = {}
 			for dir in dirs:
 				if dir.endswith(module_name + '.py') or dir.endswith(module_name + '.pyc') or dir.endswith(module_name + '.pyo'):
 					name = dir[:dir.rfind('.')]
-					if name in sub_modules:
-						continue
-					Assert(not sub_modules.has_key(name), 'Duplicated ' + module_name + ' ' + name)
-					sub_modules[name] = self.service + '.' + module_name + 's.' + name
-			modules.update(sub_modules)
+					modules.append(self.service + '.' + module_name + 's.' + name)
 		return modules
 
 	def switch_to_alive(self):
