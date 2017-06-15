@@ -66,6 +66,9 @@ class Application(tornado.web.Application):
 		IOLoop.current().add_callback(_wait)
 
 	def init_ui_modules(self):
+		'''All ui_modules under [service name]/ui_modules will be loaded at init.
+		Only file which ends with 'ui_module.py' will be loaded.
+		'''
 		ui_modules = {}
 		modules = self.get_modules('ui_module')
 		for name,path in modules.iteritems():
