@@ -82,8 +82,10 @@ class Application(tornado.web.Application):
 
 		for name,path in modules.iteritems():
 			module = __import__(path, fromlist=['handlers'])
-			handlers.extend(module.handlers)
-		#handlers.append((r'/', WelcomeHandler))
+			for handler in module.handlers:
+				handlers = filter(lambda h: h[0] != handler[0], handlers)
+				handlers.append(handler)
+
 		handlers.append((r'/static_base/(.+)', tornado.web.StaticFileHandler, dict(path=self.root_dir + '/base/static')))
 		return handlers
 

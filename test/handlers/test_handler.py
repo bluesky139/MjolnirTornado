@@ -28,7 +28,14 @@ class AsyncHandler(BaseHandler):
 		result = yield self.test_mgr.async_return(test_enum, s)
 		self.write(result)
 
+class TestWelcomeHandler(BaseHandler):
+	def get(self):
+		self.write('TestWelcomeHandler')
+
 handlers = [
 	(r'/test', TestHandler),
 	(r'/async', AsyncHandler),
+	
+	# Override base handler by service handler with same path.
+	#(r'/', TestWelcomeHandler)
 ]
