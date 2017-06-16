@@ -7,10 +7,29 @@ import logging
 import time
 import signal
 import json
+import re
 import tornado.web
 import tornado.escape
 from base import *
 from tornado.options import options
+
+arg_service = None
+for arg in sys.argv:
+	match = re.match(r'^\-\-service_name=(.+)$', arg)
+	if match:
+		arg_service = match.group(1)
+		break
+
+# Load service module first, all service specific defines should be wrote in __init__.py
+if arg_service:
+	__import__(arg_service)
+else:
+	dirs = os.listdir(root_dir)
+	dirs = filter(lambda d: not d.startswith('.') and not d.startswith('_') 
+			   and d != 'base' and d != 'main'
+			   and os.path.isdir(root_dir + '/' + d), dirs)
+	for dir in dirs:
+		__import__(dir)
 
 options.parse_command_line(None, False)
 options.log_rotate_mode = 'time'
