@@ -18,7 +18,7 @@ class AsyncHandler(BaseHandler):
 	@tornado.gen.coroutine
 	def get(self):
 		yield tornado.gen.sleep(0.1)
-		self.write('aa')
+		self.render_base('hello.html')
 
 	@arguments_normalization(coroutine=True, test_enum=TestEnum)
 	@tornado.gen.coroutine
