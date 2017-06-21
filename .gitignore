@@ -102,3 +102,6 @@ ENV/
 
 # VS
 .vs/
+
+# project
+_log/

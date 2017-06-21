@@ -14,6 +14,9 @@ define('connection_key', default='4fR3go4gAGE934jgEg', help='Use this to make it
 define('cookie_secret', default='3loE34zKXIBGaYpkLp9XdT91q')
 define('service_name', default='', help='Not precise in local debug.')
 define('port', 0, type=int, help='Not precise in local debug, use ``self.application.port`` instead.')
+define('region', default='')
+define('domain', default='')
+define('host_extra', default='', help='Host will be [region]-[service]-[host_extra].[domain], eg: local-test-extra.example.com')
 
 root_dir = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../')
 def combine_path(path):
@@ -151,3 +154,13 @@ class IntEnum(enum.IntEnum):
 		for c in cls:
 			return c
 
+_all_services = None
+def get_all_services():
+	global _all_services
+	if _all_services is None:
+		dirs = os.listdir(root_dir)
+		dirs = filter(lambda d: not d.startswith('.') and not d.startswith('_') 
+				   and d != 'base' and d != 'main'
+				   and os.path.isdir(root_dir + '/' + d), dirs)
+		_all_services = dirs
+	return _all_services

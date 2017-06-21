@@ -31,6 +31,9 @@
     <Compile Include="base_mgr.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="client\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="handlers\welcome_handler.py">
       <SubType>Code</SubType>
     </Compile>
@@ -64,6 +67,9 @@
     <Compile Include="utils\type_utils.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="utils\url_utils.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="utils\__init__.py">
       <SubType>Code</SubType>
     </Compile>
@@ -72,6 +78,7 @@
   <ItemGroup>
     <Folder Include="mgrs\" />
     <Folder Include="handlers\" />
+    <Folder Include="client\" />
     <Folder Include="templates\" />
     <Folder Include="ui_modules\" />
     <Folder Include="static\" />
