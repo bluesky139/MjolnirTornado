@@ -43,73 +43,12 @@ if options.local_debug:
 		os.mkdir(log_dir)
 	options.log_file_prefix = log_dir + '/' + str(options.port) + '.log'
 	options.working_dir = root_dir
-	options.domain = 'example.com'
-	options.region = 'local'
 Assert(options.log_file_prefix, 'Please specify log_file_prefix.')
 Assert(options.working_dir, 'Please specify working_dir.')
-Assert(options.domain, 'Please specify domain.')
-Assert(options.region, 'Please specify region.')
 options.run_parse_callbacks()
 os.chdir(options.working_dir)
 
-if options.local_debug:
-	class FakeNginxHandler(tornado.web.RequestHandler):
-		@tornado.gen.coroutine
-		def get(self, *args, **wargs):
-			client = Client()
-			yield self.handle(client.get)
-
-		@tornado.gen.coroutine
-		def post(self, *args, **wargs):
-			client = Client()
-			yield self.handle(client.post)
-
-		@tornado.gen.coroutine
-		def handle(self, method):
-			headers = self.request.headers
-			headers.pop('If-None-Match', None)
-			headers.pop('If-Modified-Since', None)
-			host = self.request.host.split(':')[0]
-			AssertOperation(nginx_forwards.has_key(host), 'Unknown host %s' % host)
-
-			args = {}
-			for k,v in self.request.arguments.iteritems():
-				args[k] = tornado.escape.url_escape(v[0]) if self.request.method == 'GET' else v[0]
-			ret = yield method('http://%s:%d%s' % (host, nginx_forwards[host], self.request.path), 
-					  args , headers, raise_error=False, follow_redirects=False)
-			self._headers = ret.headers
-			self.set_status(ret.error.code)
-			self.write(ret.body)
-
-		def write_error(self, status_code, **kwargs):
-			info = kwargs['exc_info'][1] if 'exc_info' in kwargs else None
-			if info and hasattr(info, 'log_message'):
-				detail = info.log_message
-			elif info and hasattr(info, 'message'):
-				detail = info.message
-			else:
-				detail = ''
-			self.finish(detail)
-
-	nginx_app = tornado.web.Application([
-		('/(.*)', FakeNginxHandler)
-	])
-	nginx_app.listen(80)
-	#nginx_app.listen(443, ssl_options={
-	#	'certfile': root_dir + '/ssl.crt',
-	#	'keyfile' : root_dir + '/ssl.key',
-	#})
-
-
-if options.local_debug:
-	nginx_forwards = {}
-	def run(service, port):
-		nginx_forwards[utils.url.get_service_host(service)] = port
-		nginx_forwards[utils.url.get_service_host_internal(service)] = port
-		return base.base_application.run(service, port)
-else:
-	from base.base_application import run
-
+from base.base_application import run
 apps = []
 if options.local_debug:
 	services = get_all_services()

@@ -10,13 +10,9 @@ from tornado.options import define
 
 define('local_debug', default=True, type=bool, help='Only for local debug.')
 define('working_dir', default='')
-define('connection_key', default='4fR3go4gAGE934jgEg', help='Use this to make it\'s validation when communicating between services themselves.')
 define('cookie_secret', default='3loE34zKXIBGaYpkLp9XdT91q')
 define('service_name', default='', help='Not precise in local debug.')
 define('port', 0, type=int, help='Not precise in local debug, use ``self.application.port`` instead.')
-define('region', default='')
-define('domain', default='')
-define('host_extra', default='', help='Host will be [region]-[service]-[host_extra].[domain], eg: local-test-extra.example.com')
 
 root_dir = os.path.realpath(os.path.dirname(os.path.realpath(__file__)) + '/../')
 def combine_path(path):
