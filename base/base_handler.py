@@ -1,11 +1,9 @@
 import tornado.web
 import tornado.concurrent
-import urlparse
 import traceback
 import json
 import os
 import functools
-from urllib import urlencode
 from tornado.options import define, options
 from base import *
 from base import utils
@@ -29,28 +27,32 @@ def arguments_normalization(coroutine=False, **cls_kwargs):
 		return _normalize
 	return handle_normalization
 
+def path_args_normalization(coroutine=False, **cls_kwargs):
+	def handle_normalization(method):
+		@functools.wraps(method)
+		async def _normalize(self, *args, **kwargs):
+			args = list(args)
+			for i in range(0, len(args)):
+				cls = cls_kwargs['_' + str(i)]
+				if cls:
+					value = args[i]
+					args[i] = cls.parse(value, except_class=InvalidArguments) if hasattr(cls, 'parse') else cls(value)
+			if coroutine:
+				await method(self, *args, **kwargs)
+			else:
+				method(self, *args, **kwargs)
+		return _normalize
+	return handle_normalization
+
 class BaseHandler(tornado.web.RequestHandler):
 	def initialize(self):
 		'''All mgrs are instanticated into self.application, here will put them into handler, for convenient access.
 		eg. `ConnectionMgr` class in ``connection_mgr.py``, then you can access it by ``self.connection_mgr``.
 		see comments in `Application.init_mgrs()` for more details.
 		'''
-		modules = self.application.get_modules('mgr')
-		mgrs = []
-		for path in modules:
-			module = __import__(path, fromlist=['mgrs'])
-			for mgr in module.mgrs:
-				mgrs = filter(lambda m: m[0].__name__ != mgr[0].__name__, mgrs)
-				mgrs.append(mgr)
-
-		for mgr in mgrs:
-			mgr  = mgr[0]
-			name = mgr.__name__
-			mgr_name = utils.type.String.lower_upper_with_underscore(name)
-			obj  = getattr(self.application, mgr_name)
+		for mgr_name, obj in self.application.get_instantiated_mgrs().items():
 			setattr(self, mgr_name, obj)
-
-		return super(BaseHandler, self).initialize()
+		super(BaseHandler, self).initialize()
 
 	#def set_default_headers(self):
 	#	referer = self.request.headers.get('Referer')

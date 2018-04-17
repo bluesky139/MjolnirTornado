@@ -15,6 +15,7 @@ from base import *
 from base import utils
 from base.client import *
 from tornado.options import options
+from tornado.ioloop import IOLoop
 
 arg_service = None
 for arg in sys.argv:
@@ -22,6 +23,13 @@ for arg in sys.argv:
 	if match:
 		arg_service = match.group(1)
 		break
+
+def get_all_services():
+	dirs = os.listdir(root_dir)
+	dirs = filter(lambda d: not d.startswith('.') and not d.startswith('_') 
+				and d != 'base' and d != 'main'
+				and os.path.isdir(root_dir + '/' + d), dirs)
+	return dirs
 
 # Load service module first, all service specific defines should be wrote in __init__.py
 if arg_service:
@@ -48,6 +56,14 @@ Assert(options.working_dir, 'Please specify working_dir.')
 options.run_parse_callbacks()
 os.chdir(options.working_dir)
 
+from tornado.log import LogFormatter 
+datefmt = '%m-%d %H:%M:%S'
+fmt = '%(color)s[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d]%(end_color)s %(message)s'
+formatter = LogFormatter(color=True, datefmt=datefmt, fmt=fmt)
+root_log = logging.getLogger()
+for logHandler in root_log.handlers:
+    logHandler.setFormatter(formatter)
+
 from base.base_application import run
 apps = []
 if options.local_debug:
@@ -61,19 +77,20 @@ else:
 
 def signal_handler(signal, frame):
 	logging.warning('Caught signal ' + str(signal))
-	tornado.ioloop.IOLoop.current().add_callback(shutdown)
+	IOLoop.current().add_callback(shutdown)
 
 def shutdown():
-	ioLoop = tornado.ioloop.IOLoop.current()
-	@tornado.gen.coroutine
-	def check_shutdown():
+	ioLoop = IOLoop.current()
+	async def check_shutdown():
 		for app in reversed(apps):
-			logging.info('Service %s is off.' % app.service)
+			logging.info('Stopping service %s.', app.service)
+			await app.shutdown()
+			logging.info('Service %s is off.', app.service)
 		ioLoop.stop()
 	ioLoop.add_callback(check_shutdown)
 
 signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT,  signal_handler)
 
-tornado.ioloop.IOLoop.current().start()
+IOLoop.current().start()
 logging.info('Exit.')

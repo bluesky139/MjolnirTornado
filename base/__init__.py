@@ -3,7 +3,6 @@ import tornado.ioloop
 import logging
 import enum
 import os
-import cPickle
 import time
 import sys
 from tornado.options import define
@@ -28,51 +27,51 @@ class HTTPError_(tornado.web.HTTPError):
 
 class HTTPError(HTTPError_):
 	def __init__(self, code, msg, *args):
-		return super(HTTPError, self).__init__(code, '[HTTPError] ', msg, *args)
+		super(HTTPError, self).__init__(code, '[HTTPError] ', msg, *args)
 
 class InvalidArguments(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(InvalidArguments, self).__init__(400, '[InvalidArguments] ', msg, *args)
+		super(InvalidArguments, self).__init__(400, '[InvalidArguments] ', msg, *args)
 
 class UnauthorizedError(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(UnauthorizedError, self).__init__(401, '[UnauthorizedError] ', msg, *args)
+		super(UnauthorizedError, self).__init__(401, '[UnauthorizedError] ', msg, *args)
 
 class InvalidOperation(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(InvalidOperation, self).__init__(403, '[InvalidOperation] ', msg, *args)
+		super(InvalidOperation, self).__init__(403, '[InvalidOperation] ', msg, *args)
 
 class NotFound(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(NotFound, self).__init__(404, '[NotFound] ', msg, *args)
+		super(NotFound, self).__init__(404, '[NotFound] ', msg, *args)
 
 class ConflictOperation(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(ConflictOperation, self).__init__(409, '[ConflictOperation] ', msg, *args)
+		super(ConflictOperation, self).__init__(409, '[ConflictOperation] ', msg, *args)
 
 class Unsupported(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(Unsupported, self).__init__(415, '[Unsupported] ', msg, *args)
+		super(Unsupported, self).__init__(415, '[Unsupported] ', msg, *args)
 
 class OperationFailed(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(OperationFailed, self).__init__(500, '[OperationFailed] ', msg, *args)
+		super(OperationFailed, self).__init__(500, '[OperationFailed] ', msg, *args)
 
 class NotImplemented(HTTPError_):
-	def __init__(self, msg = '', *args):
-		return super(OperationFailed, self).__init__(500, '[NotImplemented] ', msg, *args)
+	def __init__(self, msg='', *args):
+		super(OperationFailed, self).__init__(500, '[NotImplemented] ', msg, *args)
 
 class TimeoutError(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(TimeoutError, self).__init__(502, '[TimeoutError] ', msg, *args)
+		super(TimeoutError, self).__init__(502, '[TimeoutError] ', msg, *args)
 
 class ServiceUnavailable(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(ServiceUnavailable, self).__init__(503, '[ServiceUnavailable] ', msg, *args)
+		super(ServiceUnavailable, self).__init__(503, '[ServiceUnavailable] ', msg, *args)
 
 class AssertError(HTTPError_):
 	def __init__(self, msg, *args):
-		return super(AssertError, self).__init__(500, '[AssertError] ', msg, *args)
+		super(AssertError, self).__init__(500, '[AssertError] ', msg, *args)
 
 def Assert(condition, msg, *args, **kwargs):
 	if not condition:
@@ -149,14 +148,3 @@ class IntEnum(enum.IntEnum):
 	def first_element(cls):
 		for c in cls:
 			return c
-
-_all_services = None
-def get_all_services():
-	global _all_services
-	if _all_services is None:
-		dirs = os.listdir(root_dir)
-		dirs = filter(lambda d: not d.startswith('.') and not d.startswith('_') 
-				   and d != 'base' and d != 'main'
-				   and os.path.isdir(root_dir + '/' + d), dirs)
-		_all_services = dirs
-	return _all_services

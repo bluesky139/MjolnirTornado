@@ -22,6 +22,8 @@ class Application(tornado.web.Application):
 		self.initial_callbacks = {}
 		self.check_options()
 
+		self.module_name_dict = {}
+		self.mgr_dict = None
 		#sys.path.append(self.root_dir + '/' + service)
 		self.init_mgrs()
 		
@@ -35,35 +37,22 @@ class Application(tornado.web.Application):
 			autoescape    = None
 		)
 		super(Application, self).__init__(self.handlers_, **settings)
-		self.wait_check_end()
+		self.init_async()
 
 	def check_options(self):
 		pass
 
-	def new_initial_callback(self, name):
-		def callback(*args, **kwargs):
-			ok  = args[0] if args and len(args) > 1 else True
-			msg = args[1] if args and len(args) > 1 else None
-			if ok:
-				logging.info('End initial callback %s' % name)
-				self.initial_callbacks.pop(callback)
-			else:
-				raise AssertError('Initial error, %s' % msg)
-		self.initial_callbacks[callback] = name
-		logging.info('New initial callback %s' % name)
-		return callback
-
-	def wait_check_end(self):
-		'''Some check/connect need time, wait here a while.
-		'''
-		@tornado.gen.coroutine
-		def _wait():
-			while self.initial_callbacks:
-				logging.info('Initial callbacks remain len %d, names %s' % (len(self.initialCallbacks), ','.join(self.initialCallbacks.values())))
-				yield tornado.gen.sleep(1)
+	def init_async(self):
+		async def _init():
+			mgrs = self.get_instantiated_mgrs()
+			for name,mgr in mgrs.items():
+				try:
+					await mgr.init_async()
+				except Exception as e:
+					logging.error('Init async mgr %s error, %s', name, e)
+					raise e
 			self.switch_to_alive()
-
-		IOLoop.current().add_callback(_wait)
+		IOLoop.current().add_callback(_init)
 
 	def init_ui_modules(self):
 		'''All ui_modules under [service name]/ui_modules will be loaded at init.
@@ -85,9 +74,8 @@ class Application(tornado.web.Application):
 
 		for path in modules:
 			module = __import__(path, fromlist=['handlers'])
-			for handler in module.handlers:
-				handlers = filter(lambda h: h[0] != handler[0], handlers)
-				handlers.append(handler)
+			if hasattr(module, 'handlers'):
+				handlers.extend(module.handlers)
 
 		handlers.append((r'/static_base/(.+)', tornado.web.StaticFileHandler, dict(path=self.root_dir + '/base/static')))
 		return handlers
@@ -105,11 +93,10 @@ class Application(tornado.web.Application):
 		mgrs = []
 		for path in modules:
 			module = __import__(path, fromlist=['mgrs'])
-			for mgr in module.mgrs:
-				mgrs = filter(lambda m: m[0].__name__ != mgr[0].__name__, mgrs)
-				mgrs.append(mgr)
+			if hasattr(module, 'mgrs'):
+				mgrs.extend(module.mgrs)
 
-		mgrs = sorted(mgrs, cmp=lambda x,y:cmp(x[1],y[1]))
+		mgrs = sorted(mgrs, key=lambda x:x[1])
 		for mgr in mgrs:
 			mgr  = mgr[0]
 			name = mgr.__name__
@@ -117,6 +104,10 @@ class Application(tornado.web.Application):
 			setattr(self, utils.type.String.lower_upper_with_underscore(name), obj)
 
 	def get_modules(self, module_name):
+		modules = self.module_name_dict.get(module_name)
+		if modules is not None:
+			return modules
+
 		modules = []
 		path = self.root_dir + '/base/' + module_name + 's'
 		if os.path.exists(path):
@@ -133,11 +124,35 @@ class Application(tornado.web.Application):
 				if dir.endswith(module_name + '.py') or dir.endswith(module_name + '.pyc') or dir.endswith(module_name + '.pyo'):
 					name = dir[:dir.rfind('.')]
 					modules.append(self.service + '.' + module_name + 's.' + name)
+		self.module_name_dict[module_name] = modules
 		return modules
+
+	def get_instantiated_mgrs(self):
+		if self.mgr_dict is not None:
+			return self.mgr_dict
+
+		modules = self.get_modules('mgr')
+		mgrs = []
+		for path in modules:
+			module = __import__(path, fromlist=['mgrs'])
+			if hasattr(module, 'mgrs'):
+				mgrs.extend(module.mgrs)
+
+		self.mgr_dict = {}
+		for mgr in mgrs:
+			mgr  = mgr[0]
+			name = mgr.__name__
+			mgr_name = utils.type.String.lower_upper_with_underscore(name)
+			obj  = getattr(self, mgr_name)
+			self.mgr_dict[mgr_name] = obj
+		return self.mgr_dict
 
 	def switch_to_alive(self):
 		logging.info('%s is listening at %d' % (self.service, self.port))
 		self.listen(self.port, xheaders=True)
+
+	async def shutdown(self):
+		pass
 
 def run(service, port):
 	if not options.local_debug:
@@ -149,7 +164,7 @@ def run(service, port):
 	# Load specific app from module if available.
 	app_cls = Application
 	try:
-		module = __import__(service + '.Application', fromlist=['Application'])
+		module = __import__(service + '.application', fromlist=['Application'])
 		app_cls = getattr(module, 'Application')
 	except:
 		pass
