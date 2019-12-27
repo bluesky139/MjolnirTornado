@@ -33,7 +33,7 @@ class Bool(object):
 class Dict(object):
 	@classmethod
 	def make_sure_key(cls, value, key, default_value=''):
-		if not value.has_key(key):
+		if key not in value:
 			value[key] = default_value
 
 class NoConvert(object):
@@ -49,7 +49,7 @@ class String(object):
 	@classmethod
 	def validate(cls, s, flag, except_class=InvalidArguments, except_message='Invalid string'):
 		global _valid_str_regs
-		if not _valid_str_regs.has_key(flag):
+		if flag not in _valid_str_regs:
 			reg = r'^['
 			if flag & cls.VALID_STR_LETTER:
 				reg += r'a-zA-Z'

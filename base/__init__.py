@@ -75,7 +75,7 @@ class AssertError(HTTPError_):
 
 def Assert(condition, msg, *args, **kwargs):
 	if not condition:
-		exceptClass = kwargs['except_class'] if kwargs.has_key('except_class') else AssertError
+		exceptClass = kwargs['except_class'] if 'except_class' in kwargs else AssertError
 		raise exceptClass(msg, *args)
 
 def AssertArgument(condition, msg, *args):

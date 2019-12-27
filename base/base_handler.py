@@ -61,13 +61,13 @@ class BaseHandler(tornado.web.RequestHandler):
 	#		self.set_header('Access-Control-Allow-Origin', origin)
 	#		self.set_header('Access-Control-Allow-Credentials', 'true')
 
-	def get_argument(self, name, default=tornado.web.RequestHandler._ARG_DEFAULT, strip=True):
-		if hasattr(self, 'normalized_arguments') and self.normalized_arguments.has_key(name):
+	def get_argument(self, name, default=tornado.web._ARG_DEFAULT, strip=True):
+		if hasattr(self, 'normalized_arguments') and name in self.normalized_arguments:
 			value = self.normalized_arguments[name]
-			AssertArgument(default != tornado.web.RequestHandler._ARG_DEFAULT or value is not None, 'Missing argument %s', name)
+			AssertArgument(default != tornado.web._ARG_DEFAULT or value is not None, 'Missing argument %s', name)
 			return value if value is not None else default
 		value = super(BaseHandler, self).get_argument(name, default, strip)
-		AssertArgument(default != tornado.web.RequestHandler._ARG_DEFAULT or value != '', 'Missing argument %s', name)
+		AssertArgument(default != tornado.web._ARG_DEFAULT or value != '', 'Missing argument %s', name)
 		return value
 
 	def render(self, template_name, **kwargs):
